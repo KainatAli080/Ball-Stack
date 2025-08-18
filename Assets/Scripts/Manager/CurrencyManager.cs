@@ -7,6 +7,8 @@ public class CurrencyManager : MonoBehaviour
     public int CurrentCoins { get; private set; }
     private const string COINS_KEY = "Coins";
 
+    // IMP: Use Awake() for initializing data/state
+    // BUT Use Start() for communicating with other objects/managers
     private void Awake()
     {
         if(CurrencyInstance != null && CurrencyInstance != this)
@@ -20,11 +22,17 @@ public class CurrencyManager : MonoBehaviour
         CurrentCoins = PlayerPrefs.GetInt(COINS_KEY, 0);
     }
 
+    private void Start()
+    {
+        UIManager.UIInstance.UpdateCoinsDisplay(CurrentCoins);
+    }
+
     public void AddCoins(int amounts)
     {
         CurrentCoins += amounts;
         PlayerPrefs.SetInt(COINS_KEY, CurrentCoins);
-        // Also update coins after this
+        UIManager.UIInstance.UpdateCoinsDisplay(CurrentCoins);
+        AudioManager.AudioInstance.PlaySFX(AudioManager.AudioInstance.CoinsCollectedAudioClip);
     }
 
     public bool SpendCoins(int amounts)
@@ -33,6 +41,7 @@ public class CurrencyManager : MonoBehaviour
         {
             CurrentCoins -= amounts;
             PlayerPrefs.SetInt(COINS_KEY, CurrentCoins);
+            UIManager.UIInstance.UpdateCoinsDisplay(CurrentCoins);
             return true;
         }
         return false;

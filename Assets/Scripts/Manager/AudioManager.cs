@@ -17,6 +17,10 @@ public class AudioManager : MonoBehaviour
     public AudioSource musicSource;
     public AudioSource sfxSource;
 
+    [Header("SFX Clips (One Time Clips)")]
+    public AudioClip CoinsCollectedAudioClip;
+    public AudioClip GameOverAudioClip;
+
     private void Awake()
     {
         if (AudioInstance != null && AudioInstance != this)
@@ -36,8 +40,13 @@ public class AudioManager : MonoBehaviour
         musicSource.Play();
     }
 
+    public void StopMusic()
+    {
+        musicSource.Stop();
+    }
+
     public void PlaySFX(AudioClip clip)
     {
-        sfxSource.PlayOneShot(clip);
+        sfxSource.PlayOneShot(clip);        
     }
 }

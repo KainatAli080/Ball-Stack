@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 // ------------------------------------------------------------
@@ -15,11 +16,14 @@ public class UIManager : MonoBehaviour
     // Creating singleton
     public static UIManager UIInstance { get; private set; }
 
+    [Header("HUD Elements")]
+    [SerializeField] private TextMeshProUGUI CoinsDisplay;
+
     private void Awake()
     {
         if (UIInstance != null && UIInstance != this)
         {
-            Destroy(UIInstance);
+            Destroy(gameObject);
             return;
         }
         UIInstance = this;
@@ -34,5 +38,13 @@ public class UIManager : MonoBehaviour
     public void HidePanel(GameObject panel)
     {
         panel.SetActive(false);
+    }
+
+    public void UpdateCoinsDisplay(int coins)
+    {
+        if (CoinsDisplay != null)
+        {
+            CoinsDisplay.text = "Coins: " + coins;
+        }
     }
 }
