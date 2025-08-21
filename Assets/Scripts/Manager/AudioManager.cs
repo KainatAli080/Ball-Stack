@@ -1,4 +1,6 @@
+using NUnit.Framework;
 using UnityEngine;
+using System.Collections.Generic;
 
 // ------------------------------------------------------------
 // -----------  What Audio Manager will do?  ------------------
@@ -9,44 +11,78 @@ using UnityEngine;
 // 4. Handle volume settings, mute, etc.
 // ------------------------------------------------------------
 
+[System.Serializable]
+public class Sounds
+{
+    public string name;         // Unique sound name to call the audio
+    public AudioClip clip;      // Audio Clip to play
+    public float volume = 1f;   // Default volume
+}
+
 public class AudioManager : MonoBehaviour
 {
-    // Creating singleton
     public static AudioManager AudioInstance { get; private set; }
 
-    public AudioSource musicSource;
-    public AudioSource sfxSource;
+    [Header("Audio Sources")]
+    [SerializeField] private AudioSource musicSource;
+    [SerializeField] private AudioSource sfxSource;
 
-    [Header("SFX Clips (One Time Clips)")]
-    public AudioClip CoinsCollectedAudioClip;
-    public AudioClip GameOverAudioClip;
+    [Header("Sounds Library")]
+    [SerializeField] private AudioClip backgroundMusic;
+    [SerializeField] private List<Sounds> sounds;   // List to show in inspector 
+                                                    // Showing list in inspector because unity doesn't show dictionary in inspector currently
+                                                    // Will convert it into a dictionary at runtime for fast lookups in O(1) time
+    private Dictionary<string, Sounds> soundsDict;  // For faster lookups than list
 
     private void Awake()
     {
+        // Creating singular instance for managers
         if (AudioInstance != null && AudioInstance != this)
         {
-            // Destrying when an instance already exists and it's not the current one
             Destroy(gameObject);
             return;
         }
 
         AudioInstance = this;
-        DontDestroyOnLoad(gameObject); // to persist across scene reloads
+        DontDestroyOnLoad(gameObject);
+        // "this" refers to the current script or component instance
+        // "gameobject" refers to the actual gameobject the script is attached to
+
+        // Now converting list to dict
+        soundsDict = new Dictionary<string, Sounds>();
+        foreach (var sound in sounds)
+        {
+            soundsDict[sound.name] = sound; // creating the dict key as the sound name
+        }
     }
 
-    public void PlayMusic(AudioClip clip)
+    private void Start()
     {
-        musicSource.clip = clip;
+        if(backgroundMusic != null)
+            PlayMusic(backgroundMusic); // starting background music as soon as game starts
+    }
+
+    public void PlayMusic(AudioClip clip = null)
+    {
+        if (clip == null)
+            musicSource.clip = backgroundMusic;
+        else
+            musicSource.clip = clip;
         musicSource.Play();
     }
 
-    public void StopMusic()
+    public void StopMusic() => musicSource.Stop();
+    
+    public void PlaySFX(string name)
     {
-        musicSource.Stop();
-    }
-
-    public void PlaySFX(AudioClip clip)
-    {
-        sfxSource.PlayOneShot(clip);        
+        if(soundsDict.TryGetValue(name, out Sounds s))
+        {
+            sfxSource.PlayOneShot(s.clip, s.volume);
+        }
+        else
+        {
+            Debug.LogWarning($"Sound {name} not found!");
+        }
     }
 }
+
