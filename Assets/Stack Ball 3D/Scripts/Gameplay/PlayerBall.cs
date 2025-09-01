@@ -3,7 +3,9 @@ using UnityEngine;
 public class PlayerBall : MonoBehaviour
 {
     private Rigidbody rb;
-    public bool smash;
+    [SerializeField] private bool smash;
+    [SerializeField] private bool invisible;
+    [SerializeField] private float invisibilityMeter;
 
     private void Awake()
     {
@@ -20,6 +22,37 @@ public class PlayerBall : MonoBehaviour
         if(Input.GetMouseButtonUp(0))
         {
             smash = false;
+        }
+
+
+        // The checker for superpower and how slow time passed
+        // if invisibility power reached? Time will decrease slowly as in our fill meter will slowly fizzle out
+        // invisibilityMeter is the fill meter for our invisibility power
+        if (invisible)
+        {
+            invisibilityMeter -= Time.deltaTime * 0.35f;  // empty out slowly
+        }
+        else
+        {
+            if (smash)
+                invisibilityMeter += Time.deltaTime * 0.8f;   // fill up faster when smashing
+            else
+                invisibilityMeter -= Time.deltaTime * .5f;    // empty out a little faster when idle 
+        }
+
+
+        // invisibilityMeter acts like a fill meter
+        // if 1? then invisibility is activated
+        // if less? then invisbility power not activated
+        if (invisibilityMeter >= 1)
+        {
+            invisibilityMeter = 1;
+            invisible = true;
+        }
+        else if (invisibilityMeter <= 0)
+        {
+            invisibilityMeter = 0;
+            invisible = false;
         }
     }
 
@@ -40,22 +73,33 @@ public class PlayerBall : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        // Meaning No Touch
+        // Meaning No Touch on player screen, push player up
         if(!smash)
         {
             rb.linearVelocity = new Vector3(0, 50 * Time.deltaTime * 5, 0);
         }
-        // Meaning Touch and Collision Detected
+        // Meaning Player Touch and Collision Detected
         else
         {
-            if (collision.gameObject.tag == "enemy")
+            if (invisible)
             {
-                Destroy(collision.transform.parent.gameObject);
+                // if invibility active, doesn't matter which side we collide with, it will break
+                if (collision.gameObject.tag == "enemy" || collision.gameObject.tag == "plane")
+                {
+                    collision.transform.parent.GetComponent<StackController>().ShatterAllParts();
+                }
             }
-            else if (collision.gameObject.tag == "plane")
+            else
             {
-                Debug.Log("GAME OVER");
-            }
+                if (collision.gameObject.tag == "enemy")
+                {
+                    collision.transform.parent.GetComponent<StackController>().ShatterAllParts();                    
+                }
+                else if (collision.gameObject.tag == "plane")
+                {
+                    Debug.Log("GAME OVER");
+                }
+            }            
         }
     }
 
